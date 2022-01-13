@@ -7,8 +7,8 @@ from . import (
 )
 
 from .device import *  # noqa
-from dosma.core.io import *  # noqa
-from dosma.core.med_volume import *  # noqa
+from .io import *  # noqa
+from .med_volume import *  # noqa
 from .orientation import *  # noqa
 
 __all__.extend(device.__all__)
