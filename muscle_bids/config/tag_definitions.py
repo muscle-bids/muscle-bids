@@ -5,7 +5,7 @@ patient_tags = bidict({
     '00101001': 'OtherNames',
     '00100020': 'PatientID',
     '00100030': 'Birthdate',
-    '00101020': 'Age',
+    '00101010': 'Age',
     '00101040': 'PatientAddress',
     '00080080': 'InstitutionName',
     '00080081': 'InstitutionAddress',

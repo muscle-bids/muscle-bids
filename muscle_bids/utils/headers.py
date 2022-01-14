@@ -21,6 +21,12 @@ def _copy_headers(medical_volume_src, medical_volume_dest):
         setattr(medical_volume_dest, header, copy.deepcopy(getattr(medical_volume_src, header, None)))
 
 
+def copy_volume_with_bids_headers(medical_volume):
+    new_volume = MedicalVolume(medical_volume.volume, medical_volume.affine)
+    _copy_headers(medical_volume, new_volume)
+    return new_volume
+
+
 def headers_to_dicts(header_list):
     if type(header_list) != list:
         header_list = header_list.squeeze().tolist()
@@ -46,14 +52,13 @@ def headers_to_dicts(header_list):
             return
         existing_content = dest_dictionary[tag]
         if content == existing_content: return  # do nothing if the content is the same as the other slices
-        # append to existing content
-        # print(existing_content)
 
+        # append to existing content
         value_tag = _get_value_tag(existing_content)
 
         if 'isList' not in existing_content:  # content is already a list
             existing_content['isList'] = True
-            existing_content[value_tag] = [existing_content[value_tag]] * (index - 1)  # replicate content until now
+            existing_content[value_tag] = [existing_content[value_tag]] * (index)  # replicate content until now
 
         existing_content[value_tag].append(content[value_tag])
 
@@ -67,6 +72,10 @@ def headers_to_dicts(header_list):
 
 
 def dicts_to_headers(n_slices, compressed_header, compressed_meta = None):
+
+    if not compressed_meta:
+        compressed_meta = None # catch the case of an empty dictionary meta
+
     # decompress the headers
 
     dicom_dataset_list = []
@@ -81,8 +90,12 @@ def dicts_to_headers(n_slices, compressed_header, compressed_meta = None):
             new_dict[key] = copy.deepcopy(element)
             if 'isList' in element:
                 value_tag = _get_value_tag(element)
-                new_dict[key][value_tag] = element[value_tag][i]
-                new_dict[key].pop('isList')
+                try:
+                    new_dict[key][value_tag] = element[value_tag][i]
+                    new_dict[key].pop('isList')
+                except IndexError:
+                    #print(f'Warning: tag {key} not defined for image {i}')
+                    new_dict.pop(key) # tag not defined for all images
 
         vr_std = 'OW'
         try:
@@ -93,9 +106,10 @@ def dicts_to_headers(n_slices, compressed_header, compressed_meta = None):
         new_header = pydicom.dataset.Dataset.from_json(new_dict)
         # ensure file meta
         if compressed_meta is not None:
+            new_meta_dict = {}
             is_little_endian = True
             is_implicit_VR = False
-            for key, element in compressed_header.items():
+            for key, element in compressed_meta.items():
                 if key == 'is_little_endian':
                     if type(element) == list:
                         is_little_endian = element[i]
@@ -108,12 +122,13 @@ def dicts_to_headers(n_slices, compressed_header, compressed_meta = None):
                     else:
                         is_implicit_VR = element
                     continue
-                new_dict[key] = copy.deepcopy(element)
+                new_meta_dict[key] = copy.deepcopy(element)
                 if 'isList' in element:
                     value_tag = _get_value_tag(element)
-                    new_dict[key][value_tag] = element[value_tag][i]
-                    new_dict[key].pop('isList')
-            new_meta = pydicom.dataset.FileMetaDataset.from_json(new_dict)
+                    new_meta_dict[key][value_tag] = element[value_tag][i]
+                    new_meta_dict[key].pop('isList')
+
+            new_meta = pydicom.dataset.FileMetaDataset.from_json(new_meta_dict)
             new_header.file_meta = new_meta
             new_header.is_little_endian = is_little_endian
             new_header.is_implicit_VR = is_implicit_VR
@@ -126,7 +141,8 @@ def dicts_to_headers(n_slices, compressed_header, compressed_meta = None):
             new_header.file_meta = new_meta
 
         dicom_dataset_list.append(new_header)
-        return dicom_dataset_list
+    return dicom_dataset_list
+
 
 def separate_headers(raw_header_dict):
     """
@@ -137,12 +153,15 @@ def separate_headers(raw_header_dict):
     def process_dict(output_dict, tag_dict):
         for numerical_key, named_key in tag_dict.items():
             try:
-                original_content = raw_header_dict(numerical_key)
+                original_content = raw_header_dict[numerical_key]
             except KeyError:
                 continue
             value_tag = _get_value_tag(original_content)
-            output_dict[named_key] = original_content[value_tag]
-            original_content[value_tag] = ''
+            try:
+                output_dict[named_key] = original_content[value_tag]
+                original_content[value_tag] = ''
+            except KeyError:
+                pass # key has no value
 
     patient_dict = {}
     process_dict(patient_dict, patient_tags)
@@ -153,14 +172,14 @@ def separate_headers(raw_header_dict):
 
 def remerge_headers(bids_dict, patient_dict, raw_header_dict):
     def process_dict(input_dict, tag_dict):
-        for named_key, value in input_dict:
+        for named_key, value in input_dict.items():
             try:
                 numerical_key = tag_dict.inverse[named_key]
             except KeyError:
                 print("Warning: unknown tag", named_key)
                 continue
             try:
-                original_content = raw_header_dict(numerical_key)
+                original_content = raw_header_dict[numerical_key]
             except KeyError:
                 print("Warning: tag not in header", named_key)
                 continue
@@ -185,9 +204,10 @@ def group(medical_volume, key):
 
     # get all indices corresponding to separate values
     for index, value in enumerate(all_values):
-        if value not in indices_dict:
-            indices_dict[value] = []
-        indices_dict[value].append(index)
+        real_value = tuple(value)
+        if real_value not in indices_dict:
+            indices_dict[real_value] = []
+        indices_dict[real_value].append(index)
 
     array_stack = []
     for value, index_list in indices_dict.items():
@@ -220,11 +240,7 @@ def ungroup(medical_volume):
 
     fourth_dimension_key = medical_volume.bids_header['FourthDimension']
     fourth_dimension_value = medical_volume.bids_header[fourth_dimension_key]
-    new_fourth_dimension_value = []
-
-    # add a value for each slice in the header to flatten it
-    for value in fourth_dimension_value:
-        new_fourth_dimension_value.extend([value]*n_slices)
+    new_fourth_dimension_value = fourth_dimension_value*n_slices # multiply the value list
 
     medical_volume_out.bids_header.pop('FourthDimension')
     medical_volume_out.bids_header[fourth_dimension_key] = new_fourth_dimension_value

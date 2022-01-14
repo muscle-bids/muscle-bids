@@ -400,6 +400,7 @@ class DicomWriter(DataWriter):
         new_orientation = (volume.orientation[x] for x in single_dim + full_dim)
 
         volume = volume.reformat(new_orientation)
+        print(volume.headers().shape)
         assert volume.headers().shape[:3] == (1, 1, volume.shape[2])
 
         # Reformat medical volume to expected orientation specified by dicom headers.
