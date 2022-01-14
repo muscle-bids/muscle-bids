@@ -1,0 +1,16 @@
+bidict
+h5py
+natsort
+nibabel
+numpy
+packaging
+pandas
+pip
+pydicom
+pyparsing
+python-dateutil
+pytz
+setuptools
+six
+tqdm
+wheel

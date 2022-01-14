@@ -81,7 +81,7 @@ class MedicalVolume(NDArrayOperatorsMixin):
     Only the volume data will be moved to the gpu. Headers and affine matrix will remain on
     the cpu. The following code moves a MedicalVolume to gpu 0 and back to the cpu:
 
-    >>> from dosma import Device
+    >>> from .device import Device
     >>> mv = MedicalVolume(np.random.rand((10,20,30)), np.eye(4))
     >>> mv_gpu = mv.to(Device(0))
     >>> mv_cpu = mv.cpu()
@@ -148,13 +148,13 @@ class MedicalVolume(NDArrayOperatorsMixin):
                 given by the data format in which the volume will be saved.
             data_format (ImageDataFormat): Format to save data.
         """
-        import dosma.core.io.format_io_utils
+        from .io import format_io_utils
 
         device = self.device
         if device != cpu_device:
             raise RuntimeError(f"MedicalVolume must be on cpu, got {self.device}")
 
-        writer = dosma.core.io.format_io_utils.get_writer(data_format)
+        writer = format_io_utils.get_writer(data_format)
         writer.save(self, file_path)
 
     def reformat(self, new_orientation: Sequence, inplace: bool = False) -> "MedicalVolume":
@@ -713,7 +713,7 @@ class MedicalVolume(NDArrayOperatorsMixin):
         Returns:
             MedicalVolume: MedicalVolume with rounded.
         """
-        from dosma.core.numpy_routines import around
+        from .numpy_routines import around
 
         return around(self, decimals, affine)
 
@@ -743,7 +743,7 @@ class MedicalVolume(NDArrayOperatorsMixin):
                 the underlying ndarray. Otherwise, returns a medical volume containing sum
                 values.
         """
-        from dosma.core.numpy_routines import sum_np
+        from .numpy_routines import sum_np
 
         # `out` is required for cupy arrays because of how cupy calls array.
         if out is not None:
@@ -770,7 +770,7 @@ class MedicalVolume(NDArrayOperatorsMixin):
             the underlying ndarray. Otherwise, returns a medical volume containing mean
             values.
         """
-        from dosma.core.numpy_routines import mean_np
+        from .numpy_routines import mean_np
 
         # `out` is required for cupy arrays because of how cupy calls array.
         if out is not None:
@@ -1300,7 +1300,7 @@ class MedicalVolume(NDArrayOperatorsMixin):
             return self._reduce_array(ufunc.reduce, *_inputs, **kwargs)
 
     def __array_function__(self, func, types, args, kwargs):
-        from dosma.core.numpy_routines import _HANDLED_NUMPY_FUNCTIONS
+        from .numpy_routines import _HANDLED_NUMPY_FUNCTIONS
 
         if func not in _HANDLED_NUMPY_FUNCTIONS:
             return NotImplemented
