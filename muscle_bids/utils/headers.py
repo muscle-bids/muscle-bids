@@ -218,8 +218,6 @@ def group(medical_volume, key):
     if type(all_values) != list:
         return medical_volume  # nothing to do
 
-    print(all_values)
-
     # get all indices corresponding to separate values
     for index, value in enumerate(all_values):
         if type(value) == list:
@@ -229,8 +227,6 @@ def group(medical_volume, key):
         if real_value not in indices_dict:
             indices_dict[real_value] = []
         indices_dict[real_value].append(index)
-
-    print(indices_dict)
 
     array_stack = []
     for index_list in indices_dict.values():
@@ -246,24 +242,14 @@ def group(medical_volume, key):
         for tag, element in header.items():
             if type(element) != dict: continue
             if 'isList' in element:
-                #print(tag, element)
                 value_tag = _get_value_tag(element)
-                print(new_volume.shape[2])
                 new_value_list = [[] for x in range(new_volume.shape[2])]
                 new_value_list_ok = True
                 try:
                     for outer_index, inner_index_list in enumerate(indices_dict.values()):
                         for inner_list_index, value_index in enumerate(inner_index_list):
                             value = element[value_tag][value_index]
-                            #print(value)
                             new_value_list[inner_list_index].append(value)
-                            if tag == '00201041':
-                                pass
-                                print(inner_list_index)
-                                print(new_value_list[inner_list_index])
-                                #print('index list', inner_index_list)
-                                #print('new value list')
-                                #print(new_value_list)
 
                 except IndexError:
                     #print('IndexError', key, element)
@@ -310,8 +296,6 @@ def ungroup(medical_volume):
                         *[list(x) for x in zip(*element[value_tag])]
                         )) # reconcatenate element list
                 element[value_tag] = new_value_list
-                if tag == '00201041':
-                    print(new_value_list)
                 element.pop('is4dList')
 
     medical_volume_out.bids_header.pop('FourthDimension')
