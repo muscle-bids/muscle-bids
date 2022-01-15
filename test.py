@@ -11,5 +11,4 @@ print(med_volume.shape)
 save_bids(OUTPUT, med_volume)
 
 med_volume_2 = load_bids(OUTPUT)
-print(med_volume_2.meta_header)
 save_dicom(OUTPUT_FOLDER_DICOM, med_volume_2)

@@ -1,11 +1,13 @@
 import copy
+import itertools
+import operator
 from collections import OrderedDict
 
 import numpy as np
 import pydicom.dataset
 from pydicom.uid import generate_uid
 
-from ..config.tag_definitions import defined_tags, patient_tags
+from ..config.tag_definitions import defined_tags, patient_tags, tag_translators
 from ..dosma_io.med_volume import MedicalVolume
 
 
@@ -158,7 +160,14 @@ def separate_headers(raw_header_dict):
                 continue
             value_tag = _get_value_tag(original_content)
             try:
-                output_dict[named_key] = original_content[value_tag]
+                try:
+                    translator = tag_translators[numerical_key]
+                except KeyError:
+                    translator = lambda x: x
+                if 'isList' in original_content:
+                    output_dict[named_key] = list(map(translator, original_content[value_tag]))
+                else:
+                    output_dict[named_key] = translator(original_content[value_tag])
                 original_content[value_tag] = ''
             except KeyError:
                 pass # key has no value
@@ -184,7 +193,14 @@ def remerge_headers(bids_dict, patient_dict, raw_header_dict):
                 print("Warning: tag not in header", named_key)
                 continue
             value_tag = _get_value_tag(original_content)
-            original_content[value_tag] = value
+            try:
+                translator = tag_translators[named_key]
+            except KeyError:
+                translator = lambda x: x
+            if 'isList' in original_content: # apply translator to each element
+                original_content[value_tag] = list(map(translator, value))
+            else:
+                original_content[value_tag] = translator(value)
 
     process_dict(bids_dict, defined_tags)
     process_dict(patient_dict, patient_tags)
@@ -202,25 +218,65 @@ def group(medical_volume, key):
     if type(all_values) != list:
         return medical_volume  # nothing to do
 
+    print(all_values)
+
     # get all indices corresponding to separate values
     for index, value in enumerate(all_values):
-        real_value = tuple(value)
+        if type(value) == list:
+            real_value = tuple(value)
+        else:
+            real_value = value
         if real_value not in indices_dict:
             indices_dict[real_value] = []
         indices_dict[real_value].append(index)
 
+    print(indices_dict)
+
     array_stack = []
-    for value, index_list in indices_dict.items():
+    for index_list in indices_dict.values():
         array_stack.append(medical_volume.volume[:, :, index_list])
 
-    new_volume = np.stack(array_stack, 3)
+    new_volume = np.stack(array_stack, axis=3)
 
     medical_volume_out = MedicalVolume(new_volume, medical_volume.affine)
 
     _copy_headers(medical_volume, medical_volume_out)
 
+    def group_tags(header):
+        for tag, element in header.items():
+            if type(element) != dict: continue
+            if 'isList' in element:
+                #print(tag, element)
+                value_tag = _get_value_tag(element)
+                print(new_volume.shape[2])
+                new_value_list = [[] for x in range(new_volume.shape[2])]
+                new_value_list_ok = True
+                try:
+                    for outer_index, inner_index_list in enumerate(indices_dict.values()):
+                        for inner_list_index, value_index in enumerate(inner_index_list):
+                            value = element[value_tag][value_index]
+                            #print(value)
+                            new_value_list[inner_list_index].append(value)
+                            if tag == '00201041':
+                                pass
+                                print(inner_list_index)
+                                print(new_value_list[inner_list_index])
+                                #print('index list', inner_index_list)
+                                #print('new value list')
+                                #print(new_value_list)
+
+                except IndexError:
+                    #print('IndexError', key, element)
+                    new_value_list_ok = False
+                if new_value_list_ok:
+                    element[value_tag] = new_value_list
+                    element['is4dList'] = True
+
+
     medical_volume_out.bids_header['FourthDimension'] = key
     medical_volume_out.bids_header[key] = list(indices_dict.keys())  # only keep the different values
+    group_tags(medical_volume_out.extra_header)
+    group_tags(medical_volume_out.meta_header)
 
     return medical_volume_out
 
@@ -232,7 +288,8 @@ def ungroup(medical_volume):
 
     n_slices = medical_volume.shape[2]
     new_shape = (medical_volume.shape[0], medical_volume.shape[1], medical_volume.shape[2]*medical_volume.shape[3])
-    new_volume = np.reshape(medical_volume.volume, new_shape)
+    new_volume = np.reshape(medical_volume.volume.transpose([0,1,3,2]), new_shape)
+    # make sure that slices are the fastest-changing index loop, otherwise saving dicom fails
 
     medical_volume_out = MedicalVolume(new_volume, medical_volume.affine)
 
@@ -240,10 +297,28 @@ def ungroup(medical_volume):
 
     fourth_dimension_key = medical_volume.bids_header['FourthDimension']
     fourth_dimension_value = medical_volume.bids_header[fourth_dimension_key]
-    new_fourth_dimension_value = fourth_dimension_value*n_slices # multiply the value list
+    new_fourth_dimension_value = list(itertools.chain(*[ [x]*n_slices for x in fourth_dimension_value ]))
+    # multiply the value list
+
+    def ungroup_tags(header):
+        for tag, element in header.items():
+            if type(element) != dict: continue
+            if 'is4dList' in element:
+                value_tag = _get_value_tag(element)
+                new_value_list = list(
+                    itertools.chain(
+                        *[list(x) for x in zip(*element[value_tag])]
+                        )) # reconcatenate element list
+                element[value_tag] = new_value_list
+                if tag == '00201041':
+                    print(new_value_list)
+                element.pop('is4dList')
 
     medical_volume_out.bids_header.pop('FourthDimension')
     medical_volume_out.bids_header[fourth_dimension_key] = new_fourth_dimension_value
+
+    ungroup_tags(medical_volume_out.extra_header)
+    ungroup_tags(medical_volume_out.meta_header)
 
     return medical_volume_out
 

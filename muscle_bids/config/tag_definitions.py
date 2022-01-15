@@ -1,5 +1,14 @@
 from bidict import bidict
 
+
+def list_to_item(x):
+    return x[0]
+
+
+def item_to_list(x):
+    return [x]
+
+
 patient_tags = bidict({
     '00100010': 'PatientName',
     '00101001': 'OtherNames',
@@ -17,6 +26,15 @@ patient_tags = bidict({
     '00080050': 'AccessionNumber'
 })
 
+
 defined_tags = bidict({
     '00180081': 'EchoTime'
 })
+
+
+# some tags are defined as lists even if they are numerical. Or we might want different
+# modifications before storing them into bids
+tag_translators = {
+    '00180081': list_to_item,
+    'EchoTime': item_to_list,
+}
