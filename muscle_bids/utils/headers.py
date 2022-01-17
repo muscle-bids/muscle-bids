@@ -7,7 +7,7 @@ import numpy as np
 import pydicom.dataset
 from pydicom.uid import generate_uid
 
-from ..config.tag_definitions import defined_tags, patient_tags, tag_translators
+from ..config.tag_definitions import defined_tags, patient_tags
 from ..dosma_io.med_volume import MedicalVolume
 
 
@@ -21,6 +21,29 @@ def _get_value_tag(element):
 def _copy_headers(medical_volume_src, medical_volume_dest):
     for header in ['bids_header', 'meta_header', 'patient_header', 'extra_header']:
         setattr(medical_volume_dest, header, copy.deepcopy(getattr(medical_volume_src, header, None)))
+
+
+def get_raw_tag_value(med_volume, tag):
+    if tag in defined_tags.inverse:
+        # tag is named
+        numeric_tag = defined_tags.inverse[tag]
+        if 'isList' in med_volume.extra_header[numeric_tag]:
+            return list(map(defined_tags.get_translator(tag), med_volume.bids_header[tag]))
+        else:
+            return defined_tags.get_translator(tag)(med_volume.bids_header[tag])
+
+    if tag in patient_tags.inverse:
+        # tag is named
+        numeric_tag = patient_tags.inverse[tag]
+        if 'isList' in med_volume.extra_header[numeric_tag]:
+            return list(map(patient_tags.get_translator(tag), med_volume.patient_header[tag]))
+        else:
+            return patient_tags.get_translator(tag)(med_volume.patient_header[tag])
+
+    # tag is numeric
+    value_tag = _get_value_tag(med_volume.extra_header[tag])
+    return med_volume.extra_header[tag][value_tag]
+
 
 
 def copy_volume_with_bids_headers(medical_volume):
@@ -160,10 +183,8 @@ def separate_headers(raw_header_dict):
                 continue
             value_tag = _get_value_tag(original_content)
             try:
-                try:
-                    translator = tag_translators[numerical_key]
-                except KeyError:
-                    translator = lambda x: x
+                translator = tag_dict.get_translator(numerical_key)
+
                 if 'isList' in original_content:
                     output_dict[named_key] = list(map(translator, original_content[value_tag]))
                 else:
@@ -193,10 +214,8 @@ def remerge_headers(bids_dict, patient_dict, raw_header_dict):
                 print("Warning: tag not in header", named_key)
                 continue
             value_tag = _get_value_tag(original_content)
-            try:
-                translator = tag_translators[named_key]
-            except KeyError:
-                translator = lambda x: x
+            translator = tag_dict.get_translator(named_key)
+
             if 'isList' in original_content: # apply translator to each element
                 original_content[value_tag] = list(map(translator, value))
             else:
@@ -315,6 +334,7 @@ def dicom_volume_to_bids(medical_volume):
     setattr(medical_volume, 'patient_header', patient_dict)
     setattr(medical_volume, 'extra_header', raw_header_dict)
     return medical_volume
+
 
 def bids_volume_to_dicom(medical_volume, new_series=False):
     if medical_volume.ndim > 3:
