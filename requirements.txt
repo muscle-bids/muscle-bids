@@ -3,14 +3,12 @@ h5py
 natsort
 nibabel
 numpy
+scipy
 packaging
 pandas
-pip
 pydicom
 pyparsing
 python-dateutil
 pytz
-setuptools
 six
 tqdm
-wheel

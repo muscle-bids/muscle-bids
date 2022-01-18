@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from ..dosma_io import MedicalVolume
 
@@ -6,27 +7,46 @@ class Converter(ABC):
     def __init__(self):
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_name():
+    def get_name(cls):
         return 'Abstract converter'
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_directory():
+    def get_directory(cls):
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_file_name(subject_id: str):
+    def get_file_name(cls, subject_id: str):
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def is_dataset_compatible(med_volume: MedicalVolume):
+    def is_dataset_compatible(cls, med_volume: MedicalVolume):
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def convert_dataset(med_volume: MedicalVolume):
+    def convert_dataset(cls, med_volume: MedicalVolume):
         pass
+
+    @classmethod
+    def get_file_path(cls, subject_id):
+        return os.path.join(subject_id, cls.get_directory(), cls.get_file_name(subject_id))
+
+    @classmethod
+    def find(cls, path):
+        
+        file_pattern = (cls.get_file_name('') + '.nii.gz').lower()
+
+        found_files = []
+
+        for root, dirs, files in os.walk(path):
+            for f in files:
+                if f.lower().endswith(file_pattern):
+                    found_files.append(os.path.join(root, f))
+
+        return found_files
+            

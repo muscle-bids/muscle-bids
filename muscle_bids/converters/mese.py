@@ -7,20 +7,20 @@ from ..utils.headers import get_raw_tag_value, group
 
 class MeSeConverter(Converter):
 
-    @staticmethod
-    def get_name():
+    @classmethod
+    def get_name(cls):
         return 'MESE'
 
-    @staticmethod
-    def get_directory():
+    @classmethod
+    def get_directory(cls):
         return 'anat'
 
-    @staticmethod
-    def get_file_name(subject_id: str):
+    @classmethod
+    def get_file_name(cls, subject_id: str):
         return os.path.join(f'{subject_id}_mese')
 
-    @staticmethod
-    def is_dataset_compatible(med_volume: MedicalVolume):
+    @classmethod
+    def is_dataset_compatible(cls, med_volume: MedicalVolume):
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
         echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
         # echo_times = get_raw_tag_value(med_volume, 'EchoTime')
@@ -30,8 +30,8 @@ class MeSeConverter(Converter):
 
         return False
 
-    @staticmethod
-    def convert_dataset(med_volume: MedicalVolume):
+    @classmethod
+    def convert_dataset(cls, med_volume: MedicalVolume):
         med_volume_out = group(med_volume, 'EchoTime')
 
         # rename flip angle. Maybe Siemens-specific again?
