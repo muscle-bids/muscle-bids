@@ -15,7 +15,7 @@ def load_dicom(path, group_by = None):
 
 def save_dicom(path, medical_volume, new_series = True):
     new_volume = headers.bids_volume_to_dicom(medical_volume, new_series)
-    print(new_volume.headers().shape)
+    #print(new_volume.headers().shape)
     dicom_writer = DicomWriter(num_workers=0)
     dicom_writer.save(new_volume, path)
 

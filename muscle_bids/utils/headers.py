@@ -376,3 +376,13 @@ def bids_volume_to_dicom(medical_volume, new_series=False):
 
     return new_volume
 
+
+def reduce(med_volume, index):
+    fourth_dimension_tag = med_volume.bids_header['FourthDimension']
+    new_volume = med_volume.volume[:,:,:,index]
+    new_volume = MedicalVolume(new_volume, med_volume.affine)
+    copy_headers(med_volume, new_volume)
+    new_volume.bids_header[fourth_dimension_tag] = [new_volume.bids_header[fourth_dimension_tag][index]]
+    new_volume = ungroup(new_volume)
+    del new_volume.bids_header[fourth_dimension_tag]
+    return new_volume
