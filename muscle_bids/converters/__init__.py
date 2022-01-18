@@ -1,5 +1,5 @@
-from .mese import MeseConverter
+from .mese import MeSeConverter
 
 converter_list = [
-    MeseConverter
+    MeSeConverter
 ]

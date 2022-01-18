@@ -19,4 +19,5 @@ if __name__ == '__main__':
             converted_volume = converter_class.convert_dataset(med_volume)
             save_bids(str(output_path / converter_class.get_file_name('test')) + '.nii.gz', converted_volume)
             print('Volume saved')
+            break
 

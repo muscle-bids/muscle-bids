@@ -5,30 +5,26 @@ from ..dosma_io import MedicalVolume
 from ..utils.headers import get_raw_tag_value, group
 
 
-class MeSeConverter(Converter):
+class QT2Converter(Converter):
 
     @staticmethod
     def get_name():
-        return 'MESE'
+        return 'T2'
 
     @staticmethod
     def get_directory():
-        return 'anat'
+        return 'quant'
 
     @staticmethod
     def get_file_name(subject_id: str):
-        return os.path.join(f'{subject_id}_mese')
+        return os.path.join(f'{subject_id}_t2')
 
     @staticmethod
     def is_dataset_compatible(med_volume: MedicalVolume):
-        scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
-        echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
-        # echo_times = get_raw_tag_value(med_volume, 'EchoTime')
-
-        if scanning_sequence == 'SE' and echo_train_length > 1: #maybe scanning_sequence is Siemens-specific?
+        if med_volume.ndim == 3:
             return True
-
-        return False
+        else:
+            return False
 
     @staticmethod
     def convert_dataset(med_volume: MedicalVolume):

@@ -18,7 +18,7 @@ def _get_value_tag(element):
     return value_tag
 
 
-def _copy_headers(medical_volume_src, medical_volume_dest):
+def copy_headers(medical_volume_src, medical_volume_dest):
     for header in ['bids_header', 'meta_header', 'patient_header', 'extra_header']:
         setattr(medical_volume_dest, header, copy.deepcopy(getattr(medical_volume_src, header, None)))
 
@@ -48,7 +48,7 @@ def get_raw_tag_value(med_volume, tag):
 
 def copy_volume_with_bids_headers(medical_volume):
     new_volume = MedicalVolume(medical_volume.volume, medical_volume.affine)
-    _copy_headers(medical_volume, new_volume)
+    copy_headers(medical_volume, new_volume)
     return new_volume
 
 
@@ -197,6 +197,18 @@ def separate_headers(raw_header_dict):
     process_dict(patient_dict, patient_tags)
     bids_dict = {}
     process_dict(bids_dict, defined_tags)
+
+    # in-plane phase encoding direction - recommended by BIDS
+    # TODO: fix correct polarity
+    pe_element = raw_header_dict['00181312']
+    value_tag = _get_value_tag(pe_element)
+    pe_value = pe_element[value_tag][0]
+    if pe_value == 'ROW':
+        bids_dict['PhaseEncodingDirection'] = 'j'
+    else:
+        bids_dict['PhaseEncodingDirection'] = 'i'
+
+
     return bids_dict, patient_dict, raw_header_dict
 
 
@@ -255,7 +267,7 @@ def group(medical_volume, key):
 
     medical_volume_out = MedicalVolume(new_volume, medical_volume.affine)
 
-    _copy_headers(medical_volume, medical_volume_out)
+    copy_headers(medical_volume, medical_volume_out)
 
     def group_tags(header):
         for tag, element in header.items():
@@ -288,17 +300,24 @@ def group(medical_volume, key):
 
 def ungroup(medical_volume):
     assert hasattr(medical_volume, 'bids_header'), 'Error grouping: medical volume must have a bids header'
-    assert medical_volume.ndim == 4, 'Error grouping: medical volume must be four dimensional'
     assert 'FourthDimension' in medical_volume.bids_header, f'Error: medical volume does not have a FourthDimension key'
 
+    if medical_volume.ndim == 3:
+        # only unravel headers
+        fourth_dimension_size = 1
+    else:
+        fourth_dimension_size = medical_volume.shape[3]
+
     n_slices = medical_volume.shape[2]
-    new_shape = (medical_volume.shape[0], medical_volume.shape[1], medical_volume.shape[2]*medical_volume.shape[3])
-    new_volume = np.reshape(medical_volume.volume.transpose([0,1,3,2]), new_shape)
-    # make sure that slices are the fastest-changing index loop, otherwise saving dicom fails
+    new_shape = (medical_volume.shape[0], medical_volume.shape[1], medical_volume.shape[2]*fourth_dimension_size)
+    if fourth_dimension_size > 1:
+        # make sure that slices are the fastest-changing index loop, otherwise saving dicom fails
+        new_volume = np.reshape(medical_volume.volume.transpose([0,1,3,2]), new_shape)
+    else:
+        new_volume = medical_volume.volume
 
     medical_volume_out = MedicalVolume(new_volume, medical_volume.affine)
-
-    _copy_headers(medical_volume, medical_volume_out)
+    copy_headers(medical_volume, medical_volume_out)
 
     fourth_dimension_key = medical_volume.bids_header['FourthDimension']
     fourth_dimension_value = medical_volume.bids_header[fourth_dimension_key]
@@ -337,7 +356,7 @@ def dicom_volume_to_bids(medical_volume):
 
 
 def bids_volume_to_dicom(medical_volume, new_series=False):
-    if medical_volume.ndim > 3:
+    if 'FourthDimension' in medical_volume.bids_header:
         medical_volume = ungroup(medical_volume)
 
     bids_header = getattr(medical_volume, 'bids_header', {})

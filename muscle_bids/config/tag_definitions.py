@@ -40,8 +40,8 @@ class TagDefinitionDict(dict):
             else:
                 dictionary[source_tag] = dest_tag
 
-    def add_element(self, numerical_tag, named_tag, numerical_to_named_translator=None,
-                    named_to_numerical_translator=None):
+    def add_element(self, numerical_tag, named_tag, numerical_to_named_translator=list_to_item,
+                    named_to_numerical_translator=item_to_list):
 
         self.__add_item(self, numerical_tag, named_tag)
         self.__add_item(self.inverse, named_tag, numerical_tag)
@@ -74,6 +74,7 @@ patient_tags = TagDefinitionDict({
     '00101040': 'PatientAddress',
     '00080080': 'InstitutionName',
     '00080081': 'InstitutionAddress',
+    '00081040': 'InstitutionalDepartmentName',
     '00080090': 'ReferringPhysician',
     '00080094': 'ReferringPhysicianPhone',
     '00081070': 'OperatorName',
@@ -82,8 +83,22 @@ patient_tags = TagDefinitionDict({
     '00080050': 'AccessionNumber'
 })
 
-defined_tags = TagDefinitionDict()
+defined_tags = TagDefinitionDict({
+    '00180081': 'EchoTime',
+    '00181314': ('FlipAngle', 'RefocusingFlipAngle'),
 
-defined_tags.add_element('00180081', 'EchoTime', list_to_item, item_to_list)
-defined_tags.add_element('00181314', ('FlipAngle', 'RefocusingFlipAngle'), list_to_item, item_to_list)
+    # standard BIDS recommended
+    '00180020': 'ScanningSequence',
+    '00180021': 'SequenceVariant',
+    '00180022': 'ScanOptions',
+    '00180024': 'SequenceName',
+    '00180023': 'MRAcquisitionType',
+    '00189020': 'MTState', # Siemens does not define this?
 
+    '00189096': 'ParallelReductionFactorInPlane', # Siemens does not define this?
+    '00189078': 'ParallelAcquisitionTechnique', # Siemens does not define this?
+    '00189081': 'PartialFourier', # Siemens does not define this?
+    '00189036': 'PartialFourierDirection', # Siemens does not define this?
+
+    '00180082': 'InversionTime'
+})
