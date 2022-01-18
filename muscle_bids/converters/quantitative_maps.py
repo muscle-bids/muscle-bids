@@ -51,6 +51,7 @@ class T2Converter(AbstractQuantitativeConverter):
         return 't2'
 
 
+
 class T1Converter(AbstractQuantitativeConverter):
 
     @classmethod
@@ -63,4 +64,18 @@ class FFConverter(AbstractQuantitativeConverter):
     @classmethod
     def _get_tag(cls):
         return 'ff'
+
+
+class B0Converter(AbstractQuantitativeConverter):
+
+    @classmethod
+    def _get_tag(cls):
+        return 'b0'
+
+
+class B1Converter(AbstractQuantitativeConverter):
+
+    @classmethod
+    def _get_tag(cls):
+        return 'b1'
 

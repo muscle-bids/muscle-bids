@@ -45,6 +45,10 @@ def get_raw_tag_value(med_volume, tag):
     return med_volume.extra_header[tag][value_tag]
 
 
+def replace_volume(medical_volume, new_data):
+    new_volume = MedicalVolume(new_data, medical_volume.affine)
+    copy_headers(medical_volume, new_volume)
+    return new_volume
 
 def copy_volume_with_bids_headers(medical_volume):
     new_volume = MedicalVolume(medical_volume.volume, medical_volume.affine)
