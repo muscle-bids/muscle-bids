@@ -21,13 +21,12 @@ class MeGreConverter(Converter):
 
     @classmethod
     def is_dataset_compatible(cls, med_volume: MedicalVolume):
-        # DCam - check the below against Philips, GE tags. Include switch
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
-        echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
+        echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]  # DCam - Philips, 0018,9005? T1FFE
         echo_times = get_raw_tag_value(med_volume, 'EchoTime')
 
         # DCam - scanning sequence = GRE, etl > 1? Check Philips & GE
-        if scanning_sequence == 'SE' and echo_train_length > 1: #maybe scanning_sequence is Siemens-specific?
+        if scanning_sequence == 'GR' and echo_train_length > 1:  # Philips GRE?
             return True
 
         return False
@@ -36,9 +35,17 @@ class MeGreConverter(Converter):
     def convert_dataset(cls, med_volume: MedicalVolume):
         med_volume_out = group(med_volume, 'EchoTime')
 
-        # rename flip angle. Maybe Siemens-specific again?
-        # med_volume_out.bids_header['RefocusingFlipAngle'] = med_volume_out.bids_header.pop('FlipAngle')
+        # manufacturer = get_raw_tag_value(med_volume, 'Manufacturer')[0]
+
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Gradient Echo'
+
+        # Manufacturer-agnostic calculation of water-fat shift in pixels
+        bw_per_pix = get_raw_tag_value(med_volume, '00180095')[0]
+        res_freq = get_raw_tag_value(med_volume, '00180084')[0]
+        water_fat_diff_ppm = 3.35
+        water_fat_shift_hz = water_fat_diff_ppm * res_freq
+        water_fat_shift_px = water_fat_shift_hz / bw_per_pix
+        med_volume_out.bids_header['WaterFatShift'] = water_fat_shift_px
 
         return med_volume_out
 
