@@ -279,8 +279,18 @@ class DicomReader(DataReader):
         if len(lstFilesDCM) == 0:
             raise FileNotFoundError("No valid dicom files found in {}".format(path))
 
+        def _safe_dicom_read(file_path):
+            try:
+                return pydicom.read_file(file_path)
+            except pydicom.errors.InvalidDicomError:
+                return None
+
         # Check if dicom file has the group_by element specified
-        temp_dicom = pydicom.read_file(lstFilesDCM[0], force=True)
+        temp_dicom = None
+        for file_path in lstFilesDCM:
+            temp_dicom = _safe_dicom_read(file_path)
+            if temp_dicom is not None:
+                break
         
         if not temp_dicom.file_meta[(2,2)].value == '1.2.840.10008.5.1.4.1.1.4.1': # Media Storage SOP Class UID == Enhanced MR Image Storage                
             for _group in group_by:
@@ -288,17 +298,19 @@ class DicomReader(DataReader):
                     raise KeyError("Tag {} does not exist in dicom".format(_group))
 
         if self.num_workers:
-            fn = functools.partial(pydicom.read_file, force=True)
             if self.verbose:
-                dicom_slices = process_map(fn, lstFilesDCM, max_workers=self.num_workers)
+                dicom_slices = process_map(_safe_dicom_read, lstFilesDCM, max_workers=self.num_workers)
             else:
                 with mp.Pool(self.num_workers) as p:
-                    dicom_slices = p.map(fn, lstFilesDCM)
+                    dicom_slices = p.map(_safe_dicom_read, lstFilesDCM)
         else:
             dicom_slices = [
-                pydicom.read_file(fp, force=True)
+                _safe_dicom_read(fp)
                 for fp in tqdm(lstFilesDCM, disable=not self.verbose)
             ]
+
+        # remove the failed files from the list
+        dicom_slices = list(filter(lambda x: x is not None, dicom_slices))
 
         # check if the dicom dataset is enhanced
         new_dicom_slices = []
