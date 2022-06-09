@@ -23,6 +23,7 @@ def _get_value_tag(element):
     value_tag = 'Value'
     if 'InlineBinary' in element: value_tag = 'InlineBinary'
     if 'BulkDataURI' in element: value_tag = 'BulkDataURI'
+    if 'Alphabetic' in element: value_tag = 'Alphabetic'
     return value_tag
 
 
