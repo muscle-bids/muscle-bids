@@ -100,5 +100,11 @@ defined_tags = TagDefinitionDict({
     '00189081': 'PartialFourier', # Siemens does not define this?
     '00189036': 'PartialFourierDirection', # Siemens does not define this?
 
-    '00180082': 'InversionTime'
+    '00180082': 'InversionTime',
+
+    # DCam - additional tags for MEGRE
+    '00180095': 'PixelBandwidth',
+    '00080070': 'Manufacturer',
+    '00180084': 'ImagingFrequency'
+
 })
