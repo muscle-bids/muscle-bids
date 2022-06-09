@@ -12,6 +12,14 @@ from ..dosma_io.med_volume import MedicalVolume
 
 
 def _get_value_tag(element):
+    """ gets the value of a tag in a generic way, regardless of its type
+
+    Parameters:
+        element (dict): the dicom tag element
+
+    Returns:
+
+    """
     value_tag = 'Value'
     if 'InlineBinary' in element: value_tag = 'InlineBinary'
     if 'BulkDataURI' in element: value_tag = 'BulkDataURI'
@@ -19,11 +27,31 @@ def _get_value_tag(element):
 
 
 def copy_headers(medical_volume_src, medical_volume_dest):
+    """ Copies the headers from one volume to another
+
+    Parameters:
+        medical_volume_src (MedicalVolume): the source volume
+        medical_volume_dest (MedicalVolume): the destination volume
+
+    Returns:
+        No return value
+    """
     for header in ['bids_header', 'meta_header', 'patient_header', 'extra_header']:
         setattr(medical_volume_dest, header, copy.deepcopy(getattr(medical_volume_src, header, None)))
 
 
 def get_raw_tag_value(med_volume, tag):
+    """
+    Gets the value of a tag, regardless of its location in the header. A tag is always defined
+    by its DICOM tag number.
+
+    Args:
+        med_volume (MedicalVolume): the volume to get the tag from
+        tag (str): the DICOM tag identifier
+
+    Returns:
+        (Any): the value of the tag
+    """
     if tag in defined_tags.inverse:
         # tag is named
         numeric_tag = defined_tags.inverse[tag]
@@ -46,17 +74,46 @@ def get_raw_tag_value(med_volume, tag):
 
 
 def replace_volume(medical_volume, new_data):
+    """ Replaces the volume of a medical volume with a new volume leaving the tags intact
+
+        Parameters:
+            medical_volume (MedicalVolume): the volume to replace
+            new_data (np.ndarray): the new volume
+
+        Returns:
+            (MedicalVolume): the new volume
+    """
     new_volume = MedicalVolume(new_data, medical_volume.affine)
     copy_headers(medical_volume, new_volume)
     return new_volume
 
 def copy_volume_with_bids_headers(medical_volume):
+    """ Creates a copy of a medical volume with the BIDS headers
+
+    Parameters:
+        medical_volume (MedicalVolume): the volume to copy
+
+    Returns:
+        (MedicalVolume): the copy of the volume
+
+    """
     new_volume = MedicalVolume(medical_volume.volume, medical_volume.affine)
     copy_headers(medical_volume, new_volume)
     return new_volume
 
 
 def headers_to_dicts(header_list):
+    """
+    this function takes a list of DICOM headers and converts them into a meta and a header dictionary
+    It compresses the dictionary so that the tags that are common to all images are kept only once.
+
+    Parameters:
+        header_list (list): list of DICOM headers
+
+    Returns:
+        (dict, dict): the meta and the header dictionaries
+
+    """
     if type(header_list) != list:
         header_list = header_list.squeeze().tolist()
 
@@ -101,7 +158,17 @@ def headers_to_dicts(header_list):
 
 
 def dicts_to_headers(n_slices, compressed_header, compressed_meta = None):
+    """
+    Reverts the headers_to_dicts function and creates a list of DICOM headers from the compressed dictionaries.
 
+    Parameters:
+        n_slices (int): the number of slices in the volume
+        compressed_header (dict): the header dictionary
+        compressed_meta (dict): the meta dictionary
+
+    Returns:
+        (list): the list of DICOM headers
+    """
     if not compressed_meta:
         compressed_meta = None # catch the case of an empty dictionary meta
 
@@ -177,6 +244,12 @@ def separate_headers(raw_header_dict):
     """
     this function separates the header into three dictionaries:
     the header with data useful for processing, the patient data, and the rest, which is needed for DICOM
+
+    Parameters:
+        raw_header_dict (dict): the header as a dictionary (returned from headers_to_dicts)
+
+    Returns:
+        (dict, dict, dict): the three dictionaries (bids, patient, raw)
     """
 
     def process_dict(output_dict, tag_dict):
@@ -217,6 +290,16 @@ def separate_headers(raw_header_dict):
 
 
 def remerge_headers(bids_dict, patient_dict, raw_header_dict):
+    """
+    Re-merge the three dictionaries into one header dictionary.
+    Args:
+        bids_dict: the bids dictionary
+        patient_dict: the patient dictionary
+        raw_header_dict: the raw header dictionary
+
+    Returns:
+
+    """
     def process_dict(input_dict, tag_dict):
         for named_key, value in input_dict.items():
             try:
@@ -244,6 +327,18 @@ def remerge_headers(bids_dict, patient_dict, raw_header_dict):
 
 
 def group(medical_volume, key):
+    """
+        Converts a 3D medical volume to a 4D one by grouping the slices according to the key.
+
+        Parameters:
+            medical_volume (MedicalVolume): the 3D medical volume
+            key (str): the key to group the slices by. Must be an entry in BIDS header
+
+        Returns:
+            MedicalVolume: the 4D medical volume with headers
+
+    """
+
     assert hasattr(medical_volume, 'bids_header'), 'Error grouping: medical volume must have a bids header'
     assert medical_volume.ndim == 3, 'Error grouping: medical volume must be three dimensional'
     assert key in medical_volume.bids_header, f'Error: medical volume does not have {key}'
@@ -303,6 +398,17 @@ def group(medical_volume, key):
 
 
 def ungroup(medical_volume):
+    """
+    Converts a 4D medical volume to a 3D one by ungrouping the slices.
+
+    Parameters:
+        medical_volume (MedicalVolume): the 4D medical volume
+
+    Returns:
+        MedicalVolume: the 3D medical volume with headers
+    """
+
+
     assert hasattr(medical_volume, 'bids_header'), 'Error grouping: medical volume must have a bids header'
     assert 'FourthDimension' in medical_volume.bids_header, f'Error: medical volume does not have a FourthDimension key'
 
@@ -350,6 +456,16 @@ def ungroup(medical_volume):
 
 
 def dicom_volume_to_bids(medical_volume):
+    """
+    Converts a medical volume to a BIDS medical volume by creating and attaching the appropriate BIDS headers.
+    Args:
+        medical_volume (MedicalVolume): the medical volume to convert
+
+    Returns:
+        MedicalVolume: the BIDS medical volume
+    """
+
+
     compressed_meta_header, compressed_header = headers_to_dicts(medical_volume.headers())
     bids_dict, patient_dict, raw_header_dict = separate_headers(compressed_header)
     setattr(medical_volume, 'meta_header', compressed_meta_header)
@@ -360,6 +476,16 @@ def dicom_volume_to_bids(medical_volume):
 
 
 def bids_volume_to_dicom(medical_volume, new_series=False):
+    """
+    Converts a BIDS medical volume to a medical volume by creating and attaching the appropriate DICOM headers.
+
+    Parameters:
+        medical_volume (MedicalVolume): the BIDS medical volume to convert
+        new_series (bool): if True, a new series UID is created for the DICOM headers
+
+    Returns:
+        MedicalVolume: the medical volume that can be saved as DICOM
+    """
     if 'FourthDimension' in medical_volume.bids_header:
         medical_volume = ungroup(medical_volume)
 
@@ -382,6 +508,18 @@ def bids_volume_to_dicom(medical_volume, new_series=False):
 
 
 def reduce(med_volume, index):
+    """
+    Reduces the dimension of a medical volume by only keeping the volume at the given index
+    and fixing the headers accordingly
+
+    Parameters:
+        med_volume (MedicalVolume): the 4D medical volume to reduce
+        index (int): The volume index to keep
+
+    Returns:
+        MedicalVolume: the 3D medical volume with headers
+    """
+
     fourth_dimension_tag = med_volume.bids_header['FourthDimension']
     new_volume = med_volume.volume[:,:,:,index]
     new_volume = MedicalVolume(new_volume, med_volume.affine)
