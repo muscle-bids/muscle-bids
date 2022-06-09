@@ -12,13 +12,13 @@ from ..dosma_io.med_volume import MedicalVolume
 
 
 def _get_value_tag(element):
-    """ gets the value of a tag in a generic way, regardless of its type
+    """ gets the name of the entry that contains the value of a tag in a generic way
 
     Parameters:
         element (dict): the dicom tag element
 
     Returns:
-
+        str: The name of the value tag
     """
     value_tag = 'Value'
     if 'InlineBinary' in element: value_tag = 'InlineBinary'
@@ -52,21 +52,33 @@ def get_raw_tag_value(med_volume, tag):
     Returns:
         (Any): the value of the tag
     """
-    if tag in defined_tags.inverse:
+    if tag in defined_tags:
         # tag is named
-        numeric_tag = defined_tags.inverse[tag]
-        if 'isList' in med_volume.extra_header[numeric_tag]:
-            return list(map(defined_tags.get_translator(tag), med_volume.bids_header[tag]))
+        named_tag = defined_tags[tag]
+        if isinstance(named_tag, list):
+            # tag is a list of tags. Find out what tag it actually is stored
+            for t in named_tag[:]:
+                if t in med_volume.bids_header:
+                    named_tag = t
+                    break
+        if 'isList' in med_volume.bids_header[named_tag]:
+            return list(map(defined_tags.get_translator(named_tag), med_volume.bids_header[named_tag]))
         else:
-            return defined_tags.get_translator(tag)(med_volume.bids_header[tag])
+            return defined_tags.get_translator(named_tag)(med_volume.bids_header[named_tag])
 
-    if tag in patient_tags.inverse:
+    if tag in patient_tags:
         # tag is named
-        numeric_tag = patient_tags.inverse[tag]
-        if 'isList' in med_volume.extra_header[numeric_tag]:
-            return list(map(patient_tags.get_translator(tag), med_volume.patient_header[tag]))
+        named_tag = patient_tags[tag]
+        if isinstance(named_tag, list):
+            # tag is a list of tags. Find out what tag it actually is stored
+            for t in named_tag[:]:
+                if t in med_volume.patient_header:
+                    named_tag = t
+                    break
+        if 'isList' in med_volume.patient_header[named_tag]:
+            return list(map(patient_tags.get_translator(named_tag), med_volume.patient_header[named_tag]))
         else:
-            return patient_tags.get_translator(tag)(med_volume.patient_header[tag])
+            return patient_tags.get_translator(named_tag)(med_volume.patient_header[named_tag])
 
     # tag is numeric
     value_tag = _get_value_tag(med_volume.extra_header[tag])
@@ -137,12 +149,14 @@ def headers_to_dicts(header_list):
             dest_dictionary[tag] = content
             return
         existing_content = dest_dictionary[tag]
-        if content == existing_content: return  # do nothing if the content is the same as the other slices
+        if content == existing_content:
+            #print("Content already exists", tag, existing_content)
+            return  # do nothing if the content is the same as the other slices
 
         # append to existing content
         value_tag = _get_value_tag(existing_content)
 
-        if 'isList' not in existing_content:  # content is already a list
+        if 'isList' not in existing_content:  # content is not already a list
             existing_content['isList'] = True
             existing_content[value_tag] = [existing_content[value_tag]] * (index)  # replicate content until now
 
@@ -269,6 +283,7 @@ def separate_headers(raw_header_dict):
                 original_content[value_tag] = ''
             except KeyError:
                 pass # key has no value
+
 
     patient_dict = {}
     process_dict(patient_dict, patient_tags)

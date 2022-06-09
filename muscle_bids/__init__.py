@@ -1,1 +1,1 @@
-from dosma_io import MedicalVolume
+from .dosma_io import MedicalVolume

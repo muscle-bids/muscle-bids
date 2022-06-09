@@ -22,6 +22,7 @@ class MeSeConverter(Converter):
     @classmethod
     def is_dataset_compatible(cls, med_volume: MedicalVolume):
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
+        print(scanning_sequence)
         echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
         # echo_times = get_raw_tag_value(med_volume, 'EchoTime')
 
