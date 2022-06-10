@@ -3,7 +3,7 @@ import os
 
 from .abstract_converter import Converter
 from ..dosma_io import MedicalVolume
-from ..utils.headers import get_raw_tag_value, group, slice_volume_3d
+from ..utils.headers import get_raw_tag_value, group, slice_volume_3d, get_manufacturer
 
 
 def _is_mese_philips(med_volume: MedicalVolume):
@@ -15,6 +15,8 @@ def _is_mese_philips(med_volume: MedicalVolume):
     Returns:
         bool: True if the MedicalVolume is a MESE Philips dataset, False otherwise.
     """
+    if 'PHILIPS' not in get_manufacturer(med_volume):
+        return False
     scanning_sequence_list = med_volume.bids_header['ScanningSequence']
     echo_times_list = med_volume.bids_header['EchoTime']
 
@@ -98,6 +100,7 @@ class MeSeConverterPhilipsMagnitude(Converter):
         med_volume_out = slice_volume_3d(med_volume, indices['magnitude'])
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Spin Echo'
         med_volume_out = group(med_volume_out, 'EchoTime')
+        med_volume_out.bids_header['RefocusingFlipAngle'] = 180.0
         return med_volume_out
 
 
@@ -129,7 +132,9 @@ class MeSeConverterPhilipsPhase(Converter):
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Spin Echo'
         med_volume_out = group(med_volume_out, 'EchoTime')
         med_volume_out.volume = (med_volume_out.volume - 2048) * math.pi / 2048 # convert to radians
+        med_volume_out.bids_header['RefocusingFlipAngle'] = 180.0
         return med_volume_out
+
 
 class MeSeConverterPhilipsReconstructedMap(Converter):
 
@@ -147,6 +152,8 @@ class MeSeConverterPhilipsReconstructedMap(Converter):
 
     @classmethod
     def is_dataset_compatible(cls, med_volume: MedicalVolume):
+        if 'PHILIPS' not in get_manufacturer(med_volume):
+            return False
         scanning_sequence_list = med_volume.bids_header['ScanningSequence']
 
         if 'RM' in scanning_sequence_list:

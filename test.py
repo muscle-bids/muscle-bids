@@ -14,14 +14,20 @@ OUTPUT_FOLDER_DICOM = 'C:\\Users\\francesco\\Desktop\\Data\\dicom_test_out'
 OUTPUT_FOLDER_DICOM_2 = 'C:\\Users\\francesco\\Desktop\\Data\\dicom_test_out_noecho'
 
 TEST_ENHANCED = 'C:\\Users\\francesco\\Desktop\\Data\\Philips_MESE_T2.dcm'
+TEST_SIEMENS = 'C:\\Users\\francesco\\Desktop\\Data\\MESE_Anon'
 
 r = DicomReader(num_workers=0, ignore_ext=True, group_by='SeriesInstanceUID')
 im = r.load(TEST_ENHANCED)
 im_bids = dicom_volume_to_bids(im[0])
 
-v = get_raw_tag_value(im_bids, '00089208')
+print(im_bids.volume.shape)
+
+from muscle_bids.converters.mese_siemens import MeSeConverterSiemensMagnitude
 
 from muscle_bids.converters.mese_philips import MeSeConverterPhilipsMagnitude, MeSeConverterPhilipsPhase, MeSeConverterPhilipsReconstructedMap
+
+print(MeSeConverterSiemensMagnitude.is_dataset_compatible(im_bids))
+
 
 converters = [
     MeSeConverterPhilipsMagnitude,
@@ -36,7 +42,7 @@ for converter in converters:
 
 sys.exit(0)
 #
-print(muscle_bids.converters.MeSeConverter.find(INPUT_FOLDER))
+print(muscle_bids.converters.MeSeConverterSiemensMagnitude.find(INPUT_FOLDER))
 
 
 med_volume = load_dicom(INPUT_FOLDER, 'EchoTime')

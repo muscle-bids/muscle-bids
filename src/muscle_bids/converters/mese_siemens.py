@@ -2,14 +2,14 @@ import os
 
 from .abstract_converter import Converter
 from ..dosma_io import MedicalVolume
-from ..utils.headers import get_raw_tag_value, group
+from ..utils.headers import get_raw_tag_value, group, get_manufacturer
 
 
-class MeSeConverter(Converter):
+class MeSeConverterSiemensMagnitude(Converter):
 
     @classmethod
     def get_name(cls):
-        return 'MESE'
+        return 'MESE_Siemens_Magnitude'
 
     @classmethod
     def get_directory(cls):
@@ -21,8 +21,15 @@ class MeSeConverter(Converter):
 
     @classmethod
     def is_dataset_compatible(cls, med_volume: MedicalVolume):
+        if 'SIEMENS' not in get_manufacturer(med_volume):
+            return False
+
+        # check if magnitude
+        if 'M' not in get_raw_tag_value(med_volume, '00080008'):
+            return False
+
+
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
-        print(scanning_sequence)
         echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
         # echo_times = get_raw_tag_value(med_volume, 'EchoTime')
 

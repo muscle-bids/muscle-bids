@@ -661,3 +661,18 @@ def reduce(med_volume, index):
     new_volume = ungroup(new_volume)
     del new_volume.bids_header[fourth_dimension_tag]
     return new_volume
+
+
+def get_manufacturer(med_volume: MedicalVolume):
+    """
+    Gets the scanner manufacturer
+
+    Parameters:
+        med_volume (MedicalVolume): the volume to test
+
+    Returns:
+        str: the manufacturer always uppercase
+    """
+
+    manufacturer = get_raw_tag_value(med_volume, '00080070')[0]
+    return manufacturer.upper()
