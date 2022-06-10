@@ -23,11 +23,11 @@ class MeGreConverter(Converter):
     def is_dataset_compatible(cls, med_volume: MedicalVolume):
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
         print(scanning_sequence)
-        #echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]  # DCam - Philips, 0018,9005? T1FFE
+        echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
         echo_times = get_raw_tag_value(med_volume, '00180081')
 
-        # DCam - scanning sequence = GRE, etl > 1? Check Philips & GE
-        if scanning_sequence == 'GR':  # Philips GRE? and echo_train_length > 1
+        # DCam - Echo train length only used for Siemens MEGRE?
+        if scanning_sequence == 'GR': # and (echo_train_length > 1 or len(echo_times) > 1):
             return True
 
         return False

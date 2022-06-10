@@ -62,7 +62,7 @@ def get_raw_tag_value(med_volume, tag):
                 if t in med_volume.bids_header:
                     named_tag = t
                     break
-        if isinstance(med_volume.bids_header[named_tag], dict) and 'isList' in med_volume.bids_header[named_tag]:
+        if isinstance(med_volume.bids_header[named_tag], list):
             return list(map(defined_tags.get_translator(named_tag), med_volume.bids_header[named_tag]))
         else:
             return defined_tags.get_translator(named_tag)(med_volume.bids_header[named_tag])
