@@ -580,11 +580,20 @@ def to_RAS_affine(headers: List[pydicom.FileDataset], default_ornt: Tuple[str, s
     # This is the preferred method to determine the k vector.
     # If single header, take cross product between i/j vectors.
     # These actions are done to avoid rounding errors that might result from float subtraction.
+    k_vec = np.zeros(3)
     if len(headers) > 1:
-        k_vec = np.asarray(headers[1].ImagePositionPatient).astype(np.float64) - np.asarray(
-            headers[0].ImagePositionPatient
-        ).astype(np.float64)
-    else:
+        for current_header_index in range(1,len(headers)):
+            k_vec = np.asarray(headers[current_header_index].ImagePositionPatient).astype(np.float64) - np.asarray(
+                headers[0].ImagePositionPatient
+            ).astype(np.float64)
+
+            # see if k_vec is more than 0
+            if np.linalg.norm(k_vec) > AFFINE_DECIMAL_PRECISION:
+                break
+
+    # we couldn't determine the k_vec as above, so we'll use the cross product of i/j vectors
+    if np.linalg.norm(k_vec) < AFFINE_DECIMAL_PRECISION:
+        print('Could not determine k_vec, using cross product of i/j vectors')
         slice_thickness = headers[0].get("SliceThickness", 1.0)
         i_norm = 1 / np.linalg.norm(i_vec) * i_vec
         j_norm = 1 / np.linalg.norm(j_vec) * j_vec
