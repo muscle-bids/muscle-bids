@@ -50,7 +50,7 @@ def _get_image_indices(med_volume: MedicalVolume):
         med_volume (MedicalVolume): The MedicalVolume to test.
 
     Returns:
-        dictionaly: A dictionary containing lists of indices for magnitude, phase, and reco.
+        dictionary: A dictionary containing lists of indices for magnitude, phase, and reco.
     """
     ima_index = {'magnitude': [],
                  'phase': [],
