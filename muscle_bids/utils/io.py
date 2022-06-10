@@ -5,7 +5,7 @@ from ..utils import headers
 
 
 def load_dicom(path, group_by = None):
-    dicom_reader = DicomReader(num_workers=0, group_by=None, ignore_ext=True)
+    dicom_reader = DicomReader(num_workers=0, group_by='SeriesInstanceUID', ignore_ext=True)
     medical_volume = dicom_reader.load(path)[0]
     new_volume = headers.dicom_volume_to_bids(medical_volume)
     if group_by is not None:
