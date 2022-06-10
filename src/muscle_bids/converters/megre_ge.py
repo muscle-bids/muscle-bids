@@ -104,7 +104,7 @@ class MeGreConverterGEMagnitude(Converter):
 
     @classmethod
     def get_name(cls):
-        return 'MEGRE'
+        return 'MEGRE_GE_Magnitude'
 
     @classmethod
     def get_directory(cls):
@@ -126,7 +126,14 @@ class MeGreConverterGEMagnitude(Converter):
         indices = _get_image_indices(med_volume)
         med_volume_out = slice_volume_3d(med_volume, indices['magnitude'])
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Gradient Echo'
-        med_volume_out = group(med_volume, 'EchoTime')
+        med_volume_out.bids_header['MagneticFieldStrength'] = get_raw_tag_value(med_volume, '00180087')[0]
+
+        # TO DO - incorporate code below into function
+        echo_times_list = med_volume.bids_header['EchoTime']
+        echo_times_nu = [echo_times_list[i] for i in indices['magnitude']]
+        med_volume_out.bids_header['EchoTime'] = echo_times_nu
+        med_volume_out = group(med_volume_out, 'EchoTime')
+
         med_volume_out.bids_header['MagneticFieldStrength'] = get_raw_tag_value(med_volume, '00180087')[0]
         med_volume_out.bids_header['WaterFatShift'] = _water_fat_shift_calc(med_volume)
 
@@ -137,7 +144,7 @@ class MeGreConverterGEPhase(Converter):
 
     @classmethod
     def get_name(cls):
-        return 'MEGRE'
+        return 'MEGRE_GE_Phase'
 
     @classmethod
     def get_directory(cls):
@@ -159,7 +166,13 @@ class MeGreConverterGEPhase(Converter):
         indices = _get_image_indices(med_volume)
         med_volume_out = slice_volume_3d(med_volume, indices['phase'])
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Gradient Echo'
-        med_volume_out = group(med_volume, 'EchoTime')
+
+        # TO DO - incorporate code below into function
+        echo_times_list = med_volume.bids_header['EchoTime']
+        echo_times_nu = [echo_times_list[i] for i in indices['phase']]
+        med_volume_out.bids_header['EchoTime'] = echo_times_nu
+        med_volume_out = group(med_volume_out, 'EchoTime')
+
         med_volume_out.bids_header['MagneticFieldStrength'] = get_raw_tag_value(med_volume, '00180087')[0]
         med_volume_out.bids_header['WaterFatShift'] = _water_fat_shift_calc(med_volume)
 
@@ -170,7 +183,7 @@ class MeGreConverterGEReal(Converter):
 
     @classmethod
     def get_name(cls):
-        return 'MEGRE'
+        return 'MEGRE_GE_Real'
 
     @classmethod
     def get_directory(cls):
@@ -192,7 +205,13 @@ class MeGreConverterGEReal(Converter):
         indices = _get_image_indices(med_volume)
         med_volume_out = slice_volume_3d(med_volume, indices['real'])
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Gradient Echo'
-        med_volume_out = group(med_volume, 'EchoTime')
+
+        # TO DO - incorporate code below into function
+        echo_times_list = med_volume.bids_header['EchoTime']
+        echo_times_nu = [echo_times_list[i] for i in indices['real']]
+        med_volume_out.bids_header['EchoTime'] = echo_times_nu
+        med_volume_out = group(med_volume_out, 'EchoTime')
+
         med_volume_out.bids_header['MagneticFieldStrength'] = get_raw_tag_value(med_volume, '00180087')[0]
         med_volume_out.bids_header['WaterFatShift'] = _water_fat_shift_calc(med_volume)
 
@@ -203,7 +222,7 @@ class MeGreConverterGEImaginary(Converter):
 
     @classmethod
     def get_name(cls):
-        return 'MEGRE'
+        return 'MEGRE_GE_Imaginary'
 
     @classmethod
     def get_directory(cls):
@@ -225,7 +244,13 @@ class MeGreConverterGEImaginary(Converter):
         indices = _get_image_indices(med_volume)
         med_volume_out = slice_volume_3d(med_volume, indices['imaginary'])
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Gradient Echo'
-        med_volume_out = group(med_volume, 'EchoTime')
+
+        # TO DO - incorporate code below into function
+        echo_times_list = med_volume.bids_header['EchoTime']
+        echo_times_nu = [echo_times_list[i] for i in indices['magnitude']]
+        med_volume_out.bids_header['EchoTime'] = echo_times_nu
+        med_volume_out = group(med_volume_out, 'EchoTime')
+
         med_volume_out.bids_header['MagneticFieldStrength'] = get_raw_tag_value(med_volume, '00180087')[0]
         med_volume_out.bids_header['WaterFatShift'] = _water_fat_shift_calc(med_volume)
 
