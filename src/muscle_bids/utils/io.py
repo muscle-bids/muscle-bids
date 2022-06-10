@@ -1,4 +1,5 @@
 import json
+import os
 
 from ..dosma_io import DicomReader, DicomWriter, NiftiReader, NiftiWriter
 from ..utils import headers
@@ -11,6 +12,29 @@ def load_dicom(path, group_by = None):
     if group_by is not None:
         new_volume = headers.group(new_volume, group_by)
     return new_volume
+
+
+def load_dicom_with_subfolders(path):
+    """
+    Loads all dicom files in a folder and its subfolders.
+
+    Parameters:
+        path (str): Path to the root folder
+
+    Returns:
+        list: List of dicom volumes
+
+    """
+    dicom_reader = DicomReader(num_workers=0, group_by='SeriesInstanceUID', ignore_ext=True)
+    def _read_dicom_recursive(rootdir):
+        output_list = dicom_reader.load(rootdir)
+        for file in os.listdir(rootdir):
+            d = os.path.join(rootdir, file)
+            if os.path.isdir(d):
+                print(d)
+                output_list.extend(_read_dicom_recursive(d))
+        return output_list
+    return _read_dicom_recursive(path)
 
 
 def save_dicom(path, medical_volume, new_series = True):
@@ -85,4 +109,25 @@ def save_bids(nii_file, medical_volume):
         json.dump(extra_and_meta_header, f, indent=2)
 
 
+def find_bids(path, suffix):
+    """
+    Finds a bids dataset with a specific suffix (e.g. mese).
 
+    Parameters:
+        path (str): Path to the root folder
+        suffix (str): Suffix of the bids dataset
+
+    Returns:
+        list: List of paths to the bids datasets
+    """
+
+    file_pattern = (suffix + '.nii.gz').lower()
+
+    found_files = []
+
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            if f.lower().endswith(file_pattern):
+                found_files.append(os.path.join(root, f))
+
+    return found_files
