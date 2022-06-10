@@ -10,6 +10,12 @@ from pydicom.uid import generate_uid
 from ..config.tag_definitions import defined_tags, patient_tags
 from ..dosma_io.med_volume import MedicalVolume
 
+from itertools import groupby
+
+def _list_all_equal(iterable):
+    """ Checks if all elements in a list are equal"""
+    g = groupby(iterable)
+    return next(g, True) and not next(g, False)
 
 def _get_value_tag(element):
     """ gets the name of the entry that contains the value of a tag in a generic way
@@ -141,6 +147,7 @@ def headers_to_dicts(header_list):
     compressed_meta = {}
     compressed_header = {}
 
+    # this function is used to compress the meta and header dictionaries
     def process_tag(tag, content, index, dest_dictionary):
         if tag == '7FE00010': # remove pixel data
             vr_type = content['vr']
@@ -340,6 +347,116 @@ def remerge_headers(bids_dict, patient_dict, raw_header_dict):
     process_dict(patient_dict, patient_tags)
 
     return raw_header_dict
+
+
+def slice_volume_3d(medical_volume, slices_list):
+    """
+    This function extracts slices specified from the slices_list from the medical volume.
+
+    Parameters:
+        medical_volume (MedicalVolume): the medical volume
+        slices_list (list): the list of slices to extract
+
+    Returns:
+        MedicalVolume: the extracted volume
+    """
+
+    n_dim = medical_volume.volume.ndim
+    assert n_dim == 3, "Only 3D volumes are supported"
+    new_volume = np.copy(medical_volume.volume[:,:,slices_list])
+
+    headers = remerge_headers(medical_volume.bids_header, medical_volume.patient_header, medical_volume.extra_header)
+    new_headers = {}
+    for key, value in headers.items():
+        if 'isList' in value: # value is a list
+            new_value = copy.deepcopy(value)
+            value_tag = _get_value_tag(value)
+            new_value_list = []
+            for sl in slices_list:
+                new_value_list.append(value[value_tag][sl])
+            if _list_all_equal(new_value_list):
+                new_value[value_tag] = new_value_list[0]
+                del new_value['isList']
+            else:
+                new_value[value_tag] = new_value_list
+
+        else:
+            new_value = copy.deepcopy(value)
+        new_headers[key] = new_value
+    new_bids, new_patient, new_raw = separate_headers(new_headers)
+    new_volume = MedicalVolume(new_volume, medical_volume.affine)
+    setattr(new_volume, 'bids_header', new_bids)
+    setattr(new_volume, 'patient_header', new_patient)
+    setattr(new_volume, 'extra_header', new_raw)
+    setattr(new_volume, 'meta_header', getattr(medical_volume, 'meta_header'))
+    return new_volume
+
+
+def concatenate_volumes_3d(volumes_list):
+    """ this function concatenates a list of 3d volumes into one volume
+
+    Parameters:
+        volumes_list (list): the list of volumes to concatenate
+
+    Returns:
+        MedicalVolume: the concatenated volume
+    """
+    assert len(volumes_list) > 0, "volumes_list is empty"
+    assert all(map(lambda x: x.volume.ndim == 3, volumes_list)), "Only 3D volumes are supported"
+
+    volume_2D_sizes = [ (x.volume.shape[0], x.volume.shape[1]) for x in volumes_list ]
+    assert _list_all_equal(volume_2D_sizes), "All volumes must have the same 2D size"
+
+    # create the new pixel data
+    new_volume = np.concatenate([x.volume for x in volumes_list], axis=2)
+
+    n_slices_list = [x.volume.shape[2] for x in volumes_list]
+
+    remerged_header_list = [ remerge_headers(x.bids_header, x.patient_header, x.extra_header) for x in volumes_list ]
+
+    all_tags = remerged_header_list[0].keys()
+    new_headers_dict = {}
+
+    #iterate over all keys and concatenate the values
+    for tag in all_tags:
+        for header_index, header in enumerate(remerged_header_list):
+            if tag not in new_headers_dict:
+                new_headers_dict[tag] = copy.deepcopy(header[tag])
+            value_tag = _get_value_tag(new_headers_dict[tag])
+            if 'isList' in new_headers_dict[tag]:
+                if 'isList' in header[tag]:
+                    # the tag is a list before and after
+                    new_headers_dict[tag][value_tag] += header[tag][value_tag]
+                else:
+                    # the tag is a list before, but not after
+                    # extend the list of values with another list of copied values with the length as the number of slices
+                    new_headers_dict[tag][value_tag] += [header[tag][value_tag]]*n_slices_list[header_index]
+            else:
+                if 'isList' in header[tag]:
+                    # the tag is not a list before, but after yes.
+                    new_headers_dict[tag]['isList'] = True # make it a list
+                    n_slices_so_far = sum(n_slices_list[:header_index])
+                    new_headers_dict[tag][value_tag] = [header[tag][value_tag]]*n_slices_so_far + new_headers_dict[tag][value_tag]
+                else:
+                    # the tag is not a list before and after
+                    if new_headers_dict[tag] == header[tag]:
+                        # the tag is the same before and after
+                        pass
+                    else:
+                        # the tag is different before and after
+                        # make it a list
+                        new_headers_dict[tag]['isList'] = True  # make it a list
+                        n_slices_so_far = sum(n_slices_list[:header_index])
+                        new_headers_dict[tag][value_tag] = [header[tag][value_tag]] * n_slices_so_far + \
+                                                           [new_headers_dict[tag][value_tag]] * n_slices_list[header_index]
+
+    new_bids, new_patient, new_raw = separate_headers(new_headers_dict)
+    new_volume = MedicalVolume(new_volume, volumes_list[0].affine)
+    setattr(new_volume, 'bids_header', new_bids)
+    setattr(new_volume, 'patient_header', new_patient)
+    setattr(new_volume, 'extra_header', new_raw)
+    setattr(new_volume, 'meta_header', getattr(volumes_list[0], 'meta_header'))
+    return new_volume
 
 
 def group(medical_volume, key):
