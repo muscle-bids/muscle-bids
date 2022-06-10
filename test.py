@@ -21,19 +21,18 @@ im_bids = dicom_volume_to_bids(im[0])
 
 v = get_raw_tag_value(im_bids, '00089208')
 
-print(im_bids.affine)
+from muscle_bids.converters.mese_philips import MeSeConverterPhilipsMagnitude, MeSeConverterPhilipsPhase, MeSeConverterPhilipsReconstructedMap
 
-print(v)
+converters = [
+    MeSeConverterPhilipsMagnitude,
+    MeSeConverterPhilipsPhase,
+    MeSeConverterPhilipsReconstructedMap
+]
 
-from muscle_bids.converters.mese_philips import MeSeConverterPhilipsMagnitude
-
-print(MeSeConverterPhilipsMagnitude.is_dataset_compatible(im_bids))
-
-data_out = MeSeConverterPhilipsMagnitude.convert_dataset(im_bids)
-print(data_out.volume.shape)
-print('.\\' + MeSeConverterPhilipsMagnitude.get_file_name('test') + '.nii.gz')
-print(data_out.affine)
-save_bids('.\\' + MeSeConverterPhilipsMagnitude.get_file_name('test') + '.nii.gz', data_out)
+for converter in converters:
+    print(converter.is_dataset_compatible(im_bids))
+    data_out = converter.convert_dataset(im_bids)
+    save_bids(os.path.join('.', converter.get_directory(), converter.get_file_name('test')) + '.nii.gz', data_out)
 
 sys.exit(0)
 #

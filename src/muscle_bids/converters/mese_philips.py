@@ -1,3 +1,4 @@
+import math
 import os
 
 from .abstract_converter import Converter
@@ -34,7 +35,6 @@ def _test_ima_type(med_volume: MedicalVolume, ima_type: str):
     """
     ima_type_list = get_raw_tag_value(med_volume, '00089208')
     flat_ima_type = [x for xs in ima_type_list for x in xs]
-    print(flat_ima_type)
 
     if ima_type in flat_ima_type:
         return True
@@ -98,5 +98,65 @@ class MeSeConverterPhilipsMagnitude(Converter):
         med_volume_out = slice_volume_3d(med_volume, indices['magnitude'])
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Spin Echo'
         med_volume_out = group(med_volume_out, 'EchoTime')
+        return med_volume_out
+
+
+class MeSeConverterPhilipsPhase(Converter):
+
+    @classmethod
+    def get_name(cls):
+        return 'MESE_Philips_Phase'
+
+    @classmethod
+    def get_directory(cls):
+        return 'anat'
+
+    @classmethod
+    def get_file_name(cls, subject_id: str):
+        return os.path.join(f'{subject_id}_mese_ph')
+
+    @classmethod
+    def is_dataset_compatible(cls, med_volume: MedicalVolume):
+        if not _is_mese_philips(med_volume):
+            return False
+
+        return _test_ima_type(med_volume, 'PHASE')
+
+    @classmethod
+    def convert_dataset(cls, med_volume: MedicalVolume):
+        indices = _get_image_indices(med_volume)
+        med_volume_out = slice_volume_3d(med_volume, indices['phase'])
+        med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Spin Echo'
+        med_volume_out = group(med_volume_out, 'EchoTime')
+        med_volume_out.volume = (med_volume_out.volume - 2048) * math.pi / 2048 # convert to radians
+        return med_volume_out
+
+class MeSeConverterPhilipsReconstructedMap(Converter):
+
+    @classmethod
+    def get_name(cls):
+        return 'MESE_Philips_ReconstructedT2'
+
+    @classmethod
+    def get_directory(cls):
+        return 'quant'
+
+    @classmethod
+    def get_file_name(cls, subject_id: str):
+        return os.path.join(f'{subject_id}_t2')
+
+    @classmethod
+    def is_dataset_compatible(cls, med_volume: MedicalVolume):
+        scanning_sequence_list = med_volume.bids_header['ScanningSequence']
+
+        if 'RM' in scanning_sequence_list:
+            return True
+        return False
+
+    @classmethod
+    def convert_dataset(cls, med_volume: MedicalVolume):
+        indices = _get_image_indices(med_volume)
+        med_volume_out = slice_volume_3d(med_volume, indices['reco'])
+        med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Spin Echo'
         return med_volume_out
 
