@@ -6,7 +6,7 @@ from ..utils import headers
 
 def load_dicom(path, group_by = None):
     dicom_reader = DicomReader(num_workers=0, group_by=None)
-    medical_volume = dicom_reader.load(path)[0]
+    medical_volume = dicom_reader.load(path, ignore_ext='True')[0]
     new_volume = headers.dicom_volume_to_bids(medical_volume)
     if group_by is not None:
         new_volume = headers.group(new_volume, group_by)

@@ -24,7 +24,7 @@ class MeGreConverter(Converter):
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
         print(scanning_sequence)
         #echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]  # DCam - Philips, 0018,9005? T1FFE
-        echo_times = get_raw_tag_value(med_volume, 'EchoTime')
+        echo_times = get_raw_tag_value(med_volume, '00180081')
 
         # DCam - scanning sequence = GRE, etl > 1? Check Philips & GE
         if scanning_sequence == 'GR':  # Philips GRE? and echo_train_length > 1
