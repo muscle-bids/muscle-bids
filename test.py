@@ -3,7 +3,7 @@ import os
 import sys
 
 from muscle_bids.dosma_io import MedicalVolume, DicomReader
-from muscle_bids.utils.headers import reduce
+from muscle_bids.utils.headers import reduce, dicom_volume_to_bids, get_raw_tag_value
 from muscle_bids.utils.io import load_dicom, save_bids, load_bids, save_dicom
 
 import muscle_bids.converters
@@ -15,12 +15,28 @@ OUTPUT_FOLDER_DICOM_2 = 'C:\\Users\\francesco\\Desktop\\Data\\dicom_test_out_noe
 
 TEST_ENHANCED = 'C:\\Users\\francesco\\Desktop\\Data\\Philips_MESE_T2.dcm'
 
-r = DicomReader(num_workers=0, group_by=None, ignore_ext=True)
+r = DicomReader(num_workers=0, ignore_ext=True, group_by='SeriesInstanceUID')
 im = r.load(TEST_ENHANCED)
+im_bids = dicom_volume_to_bids(im[0])
 
-print(len(im))
+v = get_raw_tag_value(im_bids, '00089208')
+
+print(im_bids.affine)
+
+print(v)
+
+from muscle_bids.converters.mese_philips import MeSeConverterPhilipsMagnitude
+
+print(MeSeConverterPhilipsMagnitude.is_dataset_compatible(im_bids))
+
+data_out = MeSeConverterPhilipsMagnitude.convert_dataset(im_bids)
+print(data_out.volume.shape)
+print('.\\' + MeSeConverterPhilipsMagnitude.get_file_name('test') + '.nii.gz')
+print(data_out.affine)
+save_bids('.\\' + MeSeConverterPhilipsMagnitude.get_file_name('test') + '.nii.gz', data_out)
 
 sys.exit(0)
+#
 print(muscle_bids.converters.MeSeConverter.find(INPUT_FOLDER))
 
 
