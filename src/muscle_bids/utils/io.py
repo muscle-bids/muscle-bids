@@ -34,7 +34,9 @@ def load_dicom_with_subfolders(path):
                 print(d)
                 output_list.extend(_read_dicom_recursive(d))
         return output_list
-    return _read_dicom_recursive(path)
+
+    med_volumes = _read_dicom_recursive(path)
+    return [ headers.dicom_volume_to_bids(volume) for volume in med_volumes ]
 
 
 def save_dicom(path, medical_volume, new_series = True):
