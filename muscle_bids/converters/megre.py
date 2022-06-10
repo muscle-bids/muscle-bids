@@ -23,11 +23,15 @@ class MeGreConverter(Converter):
     def is_dataset_compatible(cls, med_volume: MedicalVolume):
         scanning_sequence = get_raw_tag_value(med_volume, '00180020')[0]
         print(scanning_sequence)
+
+        # Vendor-agnostic calculation of echo times (consider removing echo_train_length)
         echo_train_length = get_raw_tag_value(med_volume, '00180091')[0]
         echo_times = get_raw_tag_value(med_volume, '00180081')
+        echo_times_flatten = [item for sublist in echo_times for item in sublist]
+        echo_times_unique = set(echo_times_flatten)
+        n_echo_times = sum(TE > 0 for TE in echo_times_unique)
 
-        # DCam - Echo train length only used for Siemens MEGRE?
-        if scanning_sequence == 'GR': # and (echo_train_length > 1 or len(echo_times) > 1):
+        if scanning_sequence == 'GR' and (echo_train_length > 1 or n_echo_times > 1):
             return True
 
         return False
