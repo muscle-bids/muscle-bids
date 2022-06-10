@@ -5,7 +5,8 @@ from .utils.io import load_dicom, save_bids
 from .converters import converter_list
 import pathlib
 
-if __name__ == '__main__':
+
+def main():
     inputDir = sys.argv[1]
     outputDir = sys.argv[2]
     med_volume = load_dicom(inputDir)
