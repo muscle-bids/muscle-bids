@@ -44,6 +44,8 @@ class MeGreConverter(Converter):
 
         med_volume_out.bids_header['PulseSequenceType'] = 'Multi-echo Gradient Echo'
 
+        med_volume_out.bids_header['MagneticFieldStrength'] = get_raw_tag_value(med_volume, '00180087')[0]
+
         # Manufacturer-agnostic calculation of water-fat shift in pixels
         bw_per_pix = get_raw_tag_value(med_volume, '00180095')[0]
         res_freq = get_raw_tag_value(med_volume, '00180084')[0]

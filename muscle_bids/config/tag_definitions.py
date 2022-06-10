@@ -105,6 +105,7 @@ defined_tags = TagDefinitionDict({
     # DCam - additional tags for MEGRE
     '00180095': 'PixelBandwidth',
     '00080070': 'Manufacturer',
-    '00180084': 'ImagingFrequency'
+    '00180084': 'ImagingFrequency',
+    '00180087': 'MagneticFieldStrength'
 
 })
