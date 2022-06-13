@@ -2,7 +2,7 @@
 
 This is a package for reading and writing a standardized data format for muscle MR imaging that is based on BIDS.
 
-Run the tutorial: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fsantini/muscle-bids/blob/main/jupyter/Muscle-bids_dcm2mbids.ipynb)
+Run the tutorial: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/muscle-bids/muscle-bids/blob/main/jupyter/Muscle-bids_dcm2mbids.ipynb)
 
 ## Main contributors
 
