@@ -3,9 +3,12 @@ import os
 import pickle
 import warnings
 from typing import Sequence
+import env
 
 import h5py
-import pandas as pd
+
+if env.package_available("pandas"):
+    import pandas as pd
 
 __all__ = ["mkdirs", "save_pik", "load_pik", "save_h5", "load_h5", "save_tables"]
 
@@ -98,30 +101,37 @@ def load_h5(file_path):
     return data
 
 
-def save_tables(
-    file_path: str, data_frames: Sequence[pd.DataFrame], sheet_names: Sequence[str] = None
-):
-    """Save data in excel tables.
+save_tables = None
 
-    Args:
-        file_path (str): File path to excel file.
-        data_frames (Sequence[pd.DataFrame]): Tables to store to excel file.
-            One table stored per sheet.
-        sheet_names (:obj:`Sequence[str]`, optional): Sheet names for each data frame.
-    """
-    mkdirs(os.path.dirname(file_path))
-    writer = pd.ExcelWriter(file_path)
+if env.package_available("pandas"):
+    def save_tables(
+        file_path: str, data_frames: Sequence[pd.DataFrame], sheet_names: Sequence[str] = None
+    ):
+        """Save data in excel tables.
 
-    if sheet_names is None:
-        sheet_names = []
+        Args:
+            file_path (str): File path to excel file.
+            data_frames (Sequence[pd.DataFrame]): Tables to store to excel file.
+                One table stored per sheet.
+            sheet_names (:obj:`Sequence[str]`, optional): Sheet names for each data frame.
+        """
+
+        mkdirs(os.path.dirname(file_path))
+        writer = pd.ExcelWriter(file_path)
+
+        if sheet_names is None:
+            sheet_names = []
+            for i in range(len(data_frames)):
+                sheet_names.append("Sheet%d" % (i + 1))
+
+        if len(data_frames) != len(sheet_names):
+            raise ValueError("Number of data_frames and sheet_frames should be the same")
+
         for i in range(len(data_frames)):
-            sheet_names.append("Sheet%d" % (i + 1))
+            df = data_frames[i]
+            df.to_excel(writer, sheet_names[i], index=False)
 
-    if len(data_frames) != len(sheet_names):
-        raise ValueError("Number of data_frames and sheet_frames should be the same")
-
-    for i in range(len(data_frames)):
-        df = data_frames[i]
-        df.to_excel(writer, sheet_names[i], index=False)
-
-    writer.save()
+        writer.save()
+else:
+    def save_tables(*args, **kwargs):
+        raise ImportError("Pandas is not installed. Install it with `pip install pandas`")
