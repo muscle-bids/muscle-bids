@@ -3,7 +3,7 @@ import os
 import pickle
 import warnings
 from typing import Sequence
-import env
+from . import env
 
 import h5py
 
