@@ -1,7 +1,7 @@
 import json
 import os
 
-from ..dosma_io import DicomReader, DicomWriter, NiftiReader, NiftiWriter
+from voxel import DicomReader, DicomWriter, NiftiReader, NiftiWriter
 from ..utils import headers
 
 

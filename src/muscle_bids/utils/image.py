@@ -1,4 +1,4 @@
-from ..dosma_io import MedicalVolume
+from voxel import MedicalVolume
 import numpy as np
 from scipy.ndimage import map_coordinates
 

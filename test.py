@@ -2,7 +2,7 @@
 import os
 import sys
 
-from muscle_bids.dosma_io import MedicalVolume, DicomReader
+from voxel import MedicalVolume, DicomReader
 from muscle_bids.utils.headers import reduce, dicom_volume_to_bids, get_raw_tag_value
 from muscle_bids.utils.io import load_dicom, save_bids, load_bids, save_dicom
 

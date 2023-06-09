@@ -8,7 +8,7 @@ import pydicom.dataset
 from pydicom.uid import generate_uid
 
 from ..config.tag_definitions import defined_tags, patient_tags
-from ..dosma_io.med_volume import MedicalVolume
+from voxel import MedicalVolume
 
 from itertools import groupby
 

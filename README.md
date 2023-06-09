@@ -16,5 +16,3 @@ Run the tutorial: [![Open In Colab](https://colab.research.google.com/assets/col
 
 This package was developed thanks to the support of the JCMSK community during the Maastricht 2022 workshop and hackaton “Building the Jupyter Community in Musculoskeletal Imaging Research”.
 
-Image I/O is based on [DOSMA](https://github.com/ad12/DOSMA) by Arjun Desai. A stripped-down version of DOSMA is present
-in muscle-bids/dosma_io.
