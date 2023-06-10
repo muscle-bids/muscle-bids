@@ -9,7 +9,7 @@ from ..utils.headers import get_raw_tag_value, group, slice_volume_3d, get_manuf
 def _is_mese_philips(med_volume: MedicalVolume):
     """
     Check if the given MedicalVolume is a MESE Philips dataset.
-    Args:
+    Parameters:
         med_volume: The MedicalVolume to test.
 
     Returns:
@@ -28,7 +28,7 @@ def _is_mese_philips(med_volume: MedicalVolume):
 def _test_ima_type(med_volume: MedicalVolume, ima_type: str):
     """
     Test if the given MedicalVolume is of the given type.
-    Args:
+    Parameters:
         med_volume (MedicalVolume): The MedicalVolume to test.
         ima_type (str): The type to test, e.g. "MAGNITUDE", "PHASE"
 
@@ -46,7 +46,7 @@ def _test_ima_type(med_volume: MedicalVolume, ima_type: str):
 def _get_image_indices(med_volume: MedicalVolume):
     """
     Get the indices for magnitude, phase, and reco for the given MedicalVolume.
-    Args:
+    Parameters:
         med_volume (MedicalVolume): The MedicalVolume to test.
 
     Returns:

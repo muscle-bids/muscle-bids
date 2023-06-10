@@ -52,7 +52,7 @@ def get_raw_tag_value(med_volume, tag):
     Gets the value of a tag, regardless of its location in the header. A tag is always defined
     by its DICOM tag number.
 
-    Args:
+    Parameters:
         med_volume (MedicalVolume): the volume to get the tag from
         tag (str): the DICOM tag identifier
 
@@ -315,7 +315,7 @@ def separate_headers(raw_header_dict):
 def remerge_headers(bids_dict, patient_dict, raw_header_dict):
     """
     Re-merge the three dictionaries into one header dictionary.
-    Args:
+    Parameters:
         bids_dict: the bids dictionary
         patient_dict: the patient dictionary
         raw_header_dict: the raw header dictionary
@@ -393,7 +393,7 @@ def slice_volume_3d(medical_volume, slices_list):
 
 
 def concatenate_volumes_3d(volumes_list):
-    """ this function concatenates a list of 3d volumes into one volume
+    """ This function concatenates a list of 3d volumes into one single 3D volume
 
     Parameters:
         volumes_list (list): the list of volumes to concatenate
@@ -591,7 +591,7 @@ def ungroup(medical_volume):
 def dicom_volume_to_bids(medical_volume):
     """
     Converts a medical volume to a BIDS medical volume by creating and attaching the appropriate BIDS headers.
-    Args:
+    Parameters:
         medical_volume (MedicalVolume): the medical volume to convert
 
     Returns:

@@ -6,6 +6,16 @@ from ..utils import headers
 
 
 def load_dicom(path, group_by = None):
+    """
+    Loads all dicom files in a folder.
+
+    Parameters:
+        path (str): Path to the folder
+        group_by (str): If not None, group the volumes by the specified header
+
+    Returns:
+        MedicalVolume with muscle-bids headers
+    """
     dicom_reader = DicomReader(num_workers=0, group_by='SeriesInstanceUID', ignore_ext=True)
     medical_volume = dicom_reader.load(path)[0]
     new_volume = headers.dicom_volume_to_bids(medical_volume)
@@ -40,6 +50,17 @@ def load_dicom_with_subfolders(path):
 
 
 def save_dicom(path, medical_volume, new_series = True):
+    """
+    Saves a volume to a folder.
+
+    Parameters:
+        path (str): Path to the folder
+        medical_volume (MedicalVolume): The volume to save
+        new_series (bool): If True, a new series is created
+
+    Returns:
+        None
+    """
     new_volume = headers.bids_volume_to_dicom(medical_volume, new_series)
     #print(new_volume.headers().shape)
     dicom_writer = DicomWriter(num_workers=0)
@@ -47,6 +68,15 @@ def save_dicom(path, medical_volume, new_series = True):
 
 
 def load_bids(nii_file):
+    """
+    Loads a nifti file and its corresponding json files.
+
+    Parameters:
+        nii_file (str): Path to the nifti file
+
+    Returns:
+        MedicalVolume: The loaded volume
+    """
     nifti_reader = NiftiReader()
     medical_volume = nifti_reader.load(nii_file)
     json_base_name = nii_file
@@ -84,6 +114,16 @@ def load_bids(nii_file):
 
 
 def save_bids(nii_file, medical_volume):
+    """
+    Saves a volume to a nifti file and its corresponding json files.
+
+    Parameters:
+        nii_file (str): Path to the nifti file
+        medical_volume (MedicalVolume): The volume to save
+
+    Returns:
+        None
+    """
     nifti_writer = NiftiWriter()
     nifti_writer.save(medical_volume, nii_file)
     json_base_name = nii_file

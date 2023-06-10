@@ -9,7 +9,7 @@ def realign_medical_volume(source: MedicalVolume, destination: MedicalVolume, in
     matrix and extent of the modified volume is identical to the one of the target.
 
 
-    Args:
+    Parameters:
         source (MedicalVolume): The volume to realign
         destination (MedicalVolume): The realigned volume will have the same extent and affine matrix of ``destination``.
         interpolation_order (int, optional): spline interpolation order.
