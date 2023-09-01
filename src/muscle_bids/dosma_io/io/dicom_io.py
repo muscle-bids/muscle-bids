@@ -588,11 +588,11 @@ def to_RAS_affine(headers: List[pydicom.FileDataset], default_ornt: Tuple[str, s
             ).astype(np.float64)
 
             # see if k_vec is more than 0
-            if np.linalg.norm(k_vec) > AFFINE_DECIMAL_PRECISION:
+            if np.linalg.norm(k_vec) > 10**(-AFFINE_DECIMAL_PRECISION):
                 break
 
     # we couldn't determine the k_vec as above, so we'll use the cross product of i/j vectors
-    if np.linalg.norm(k_vec) < AFFINE_DECIMAL_PRECISION:
+    if np.linalg.norm(k_vec) < 10**(-AFFINE_DECIMAL_PRECISION):
         print('Could not determine k_vec, using cross product of i/j vectors')
         slice_thickness = headers[0].get("SliceThickness", 1.0)
         i_norm = 1 / np.linalg.norm(i_vec) * i_vec

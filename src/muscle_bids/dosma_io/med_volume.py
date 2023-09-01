@@ -187,6 +187,7 @@ class MedicalVolume(NDArrayOperatorsMixin):
         Returns:
             MedicalVolume: The reformatted volume. If ``inplace=True``, returns ``self``.
         """
+        print('Reformat')
         xp = self.device.xp
         device = self.device
         headers = self._headers
@@ -243,6 +244,8 @@ class MedicalVolume(NDArrayOperatorsMixin):
         temp_affine[:3, :3] = b_vecs
         temp_affine[:3, 3] = b_origin
         temp_affine[temp_affine == 0] = 0  # get rid of negative 0s
+
+        print('temp affine', temp_affine)
 
         if inplace:
             self._affine = temp_affine
