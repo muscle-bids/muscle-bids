@@ -1,3 +1,4 @@
+from .ct import CTConverter, PCCTConverter
 from .mese_siemens import MeSeConverterSiemensMagnitude
 from .megre_ge import MeGreConverterGEMagnitude, MeGreConverterGEPhase, MeGreConverterGEReal, \
     MeGreConverterGEImaginary, MeGreConverterGEReconstructedMap
@@ -5,6 +6,8 @@ from .mese_philips import MeSeConverterPhilipsMagnitude, MeSeConverterPhilipsPha
 from .quantitative_maps import T1Converter, T2Converter, FFConverter, B0Converter, B1Converter
 
 converter_list = [
+    CTConverter,
+    PCCTConverter,
     MeSeConverterSiemensMagnitude,
     MeGreConverterGEMagnitude,
     MeGreConverterGEPhase,
