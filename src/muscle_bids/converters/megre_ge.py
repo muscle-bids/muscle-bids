@@ -108,7 +108,7 @@ class MeGreConverterGEMagnitude(Converter):
 
     @classmethod
     def get_directory(cls):
-        return 'anat'
+        return os.path.join('mr/anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
@@ -148,7 +148,7 @@ class MeGreConverterGEPhase(Converter):
 
     @classmethod
     def get_directory(cls):
-        return 'anat'
+        return os.path.join('mr/anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
@@ -187,7 +187,7 @@ class MeGreConverterGEReal(Converter):
 
     @classmethod
     def get_directory(cls):
-        return 'anat'
+        return os.path.join('mr/anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
@@ -226,7 +226,7 @@ class MeGreConverterGEImaginary(Converter):
 
     @classmethod
     def get_directory(cls):
-        return 'anat'
+        return os.path.join('mr/anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
