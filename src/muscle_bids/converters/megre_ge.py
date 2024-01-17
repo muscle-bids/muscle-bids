@@ -266,7 +266,7 @@ class MeGreConverterGEReconstructedMap(Converter):
 
     @classmethod
     def get_directory(cls):
-        return 'quant'
+        return os.path.join('mr/quant')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
