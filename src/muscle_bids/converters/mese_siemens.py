@@ -13,7 +13,7 @@ class MeSeConverterSiemensMagnitude(Converter):
 
     @classmethod
     def get_directory(cls):
-        return os.path.join('mr/anat')
+        return os.path.join('mr-anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
