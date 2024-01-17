@@ -676,3 +676,18 @@ def get_manufacturer(med_volume: MedicalVolume):
 
     manufacturer = get_raw_tag_value(med_volume, '00080070')[0]
     return manufacturer.upper()
+
+
+def get_modality(med_volume: MedicalVolume):
+    """
+    Gets the imaging modality
+
+    Parameters:
+        med_volume (MedicalVolume): the volume to test
+
+    Returns:
+        str: the modality always uppercase
+    """
+
+    modality = get_raw_tag_value(med_volume, '00080060')[0]
+    return modality.upper()
