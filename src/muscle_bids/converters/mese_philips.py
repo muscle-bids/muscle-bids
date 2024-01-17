@@ -81,7 +81,7 @@ class MeSeConverterPhilipsMagnitude(Converter):
 
     @classmethod
     def get_directory(cls):
-        return os.path.join('mr/anat')
+        return os.path.join('mr-anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
@@ -112,7 +112,7 @@ class MeSeConverterPhilipsPhase(Converter):
 
     @classmethod
     def get_directory(cls):
-        return os.path.join('mr/anat')
+        return os.path.join('mr-anat')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
@@ -144,7 +144,7 @@ class MeSeConverterPhilipsReconstructedMap(Converter):
 
     @classmethod
     def get_directory(cls):
-        return os.path.join('mr/quant')
+        return os.path.join('mr-quant')
 
     @classmethod
     def get_file_name(cls, subject_id: str):
