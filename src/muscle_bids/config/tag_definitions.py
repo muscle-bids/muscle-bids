@@ -107,6 +107,8 @@ defined_tags = TagDefinitionDict({
     '00080070': 'Manufacturer',
     '00180084': 'ImagingFrequency',
     '00180087': 'MagneticFieldStrength',
-    '0043102F': 'ImageType'  # GE private tag for complex data type
+    '0043102F': 'ImageType',  # GE private tag for complex data type
+
+
 
 })
